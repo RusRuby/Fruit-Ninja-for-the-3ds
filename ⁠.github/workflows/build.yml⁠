@@ -17,15 +17,58 @@ jobs:
         run: |
           make
 
-      - name: Setup Python
+      - name: Build CIA
         run: |
-          dkp-pacman -Sy --noconfirm python python-pip || true
-          pip install 3dsx2cia --break-system-packages || pip install 3dsx2cia || true
+          # 1. Find the generated .3dsx file
+          FILE=$(find . -maxdepth 2 -name "*.3dsx" -type f | head -n 1)
+          echo "Found 3DSX at: $FILE"
 
-      - name: Convert 3DSX to CIA
-        run: |
-          3DSX_FILE=$(find . -name "*.3dsx" -type f | head -n 1)
-          python3 -m 3dsx2cia "$3DSX_FILE" fruitninja3ds.cia || 3dsx2cia "$3DSX_FILE" fruitninja3ds.cia
+          # 2. Extract embedded ELF from 3DSX
+          3dsxtool "$FILE" output.elf
+
+          # 3. Create RSF config file for makerom
+          cat << 'EOF' > build.rsf
+          BasicInfo:
+            Title                   : "Fruit Ninja 3DS"
+            CompanyCode             : "00"
+            ProductCode             : "CTR-P-FRUT"
+            ContentType             : Application
+            Logo                    : Nintendo
+
+          TitleInfo:
+            UniqueId                : 0xF2812
+            Category                : Application
+
+          Option:
+            UseOn3DS                : true
+
+          AccessControlInfo:
+            CoreVersion             : 2
+            IdealProcessor          : 0
+            AffinityMask            : 1
+            SystemMode              : 64MB
+            StorageId               : Host
+            DisableDebug            : true
+            EnableFinished          : true
+            CanWriteSharedPage      : false
+            CanUsePrivilegedPriority: false
+            CanAddressAccess        : false
+            RunnableOnSleep         : false
+            SpecialMemory           : false
+
+            MemoryType              : Application
+            HandleTableSize         : 0x200
+            IORegisterMapping:
+            MemoryMapping:
+
+          SystemControlInfo:
+            SaveDataSize            : 0KB
+            RemasterVersion         : 0
+            StackSize               : 0x00040000
+          EOF
+
+          # 4. Build CIA directly
+          makerom -f cia -o fruitninja3ds.cia -rsf build.rsf -target t -elf output.elf
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -33,5 +76,4 @@ jobs:
           name: FruitNinja-3DS-Build
           path: |
             *.cia
-            **/*.cia
-            **/*.3dsx
+            *.3dsx
