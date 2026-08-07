@@ -17,16 +17,11 @@ jobs:
         run: |
           make
 
-      - name: Build CIA
+      - name: Convert 3DSX to CIA
         run: |
-          # 1. Find the generated .3dsx file
-          FILE=$(find . -maxdepth 2 -name "*.3dsx" -type f | head -n 1)
-          echo "Found 3DSX at: $FILE"
-
-          # 2. Extract embedded ELF from 3DSX
-          3dsxtool "$FILE" output.elf
-
-          # 3. Create RSF config file for makerom
+          3DSX_FILE=$(find . -name "*.3dsx" | head -n 1)
+          3dsxtool "$3DSX_FILE" output.elf
+          
           cat << 'EOF' > build.rsf
           BasicInfo:
             Title                   : "Fruit Ninja 3DS"
@@ -67,7 +62,6 @@ jobs:
             StackSize               : 0x00040000
           EOF
 
-          # 4. Build CIA directly
           makerom -f cia -o fruitninja3ds.cia -rsf build.rsf -target t -elf output.elf
 
       - name: Upload Artifacts
