@@ -2,7 +2,11 @@ name: Build 3DS CIA
 
 on:
   push:
+    branches: ["**"]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
