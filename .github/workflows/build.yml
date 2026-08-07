@@ -1,0 +1,26 @@
+name: Build 3DS CIA
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile Code
+        run: |
+          make
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FruitNinja-3DS-Build
+          path: |
+            *.cia
+            *.3dsx
