@@ -1,0 +1,36 @@
+name: Build 3DS CIA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile 3DSX
+        run: |
+          make
+
+      - name: Install Python & 3dsx2cia
+        run: |
+          dkp-pacman -Sy --noconfirm python python-pip
+          pip install 3dsx2cia --break-system-packages || pip install 3dsx2cia
+
+      - name: Convert 3DSX to CIA
+        run: |
+          3dsx2cia *.3dsx fruitninja3ds.cia
+
+      - name: Upload CIA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FruitNinja-CIA-Build
+          path: |
+            *.cia
+            *.3dsx
