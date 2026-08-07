@@ -17,19 +17,15 @@ jobs:
         run: |
           make
 
-      - name: Install Python & 3dsx2cia
+      - name: Setup Python
         run: |
-          apt-get update && apt-get install -y python3 python3-pip || dkp-pacman -Sy --noconfirm python python-pip || true
-          python3 -m pip install 3dsx2cia --break-system-packages || pip install 3dsx2cia || true
+          dkp-pacman -Sy --noconfirm python python-pip || true
+          pip install 3dsx2cia --break-system-packages || pip install 3dsx2cia || true
 
       - name: Convert 3DSX to CIA
         run: |
-          # Find any .3dsx file in the project
-          FILE=$(find . -name "*.3dsx" | head -n 1)
-          echo "Found file: $FILE"
-          
-          # Convert to CIA
-          python3 -m 3dsx2cia "$FILE" fruitninja3ds.cia || 3dsx2cia "$FILE" fruitninja3ds.cia
+          3DSX_FILE=$(find . -name "*.3dsx" -type f | head -n 1)
+          python3 -m 3dsx2cia "$3DSX_FILE" fruitninja3ds.cia || 3dsx2cia "$3DSX_FILE" fruitninja3ds.cia
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
